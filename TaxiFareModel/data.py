@@ -1,6 +1,22 @@
 import pandas as pd
 
+from TaxiFareModel.utils import simple_time_tracker
+from google.cloud import storage
+
 AWS_BUCKET_PATH = "s3://wagon-public-datasets/taxi-fare-train.csv"
+
+
+@simple_time_tracker
+def get_data_from_gcp(nrows=10000, local=False, optimize=False, **kwargs):
+    """method to get the training data (or a portion of it) from google cloud bucket"""
+    # Add Client() here
+    client = storage.Client()
+    if local:
+        path = "data/data_data_10Mill.csv"
+    else:
+        path = "gs://complete/correct_path/here"
+    df = pd.read_csv(path, nrows=nrows)
+    return df
 
 
 def get_data(nrows=10_000):

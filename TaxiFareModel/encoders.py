@@ -1,10 +1,13 @@
-from sklearn.base import BaseEstimator, TransformerMixin
 import pandas as pd
+from sklearn.base import BaseEstimator, TransformerMixin
 from TaxiFareModel.utils import haversine_vectorized
 
+
 class TimeFeaturesEncoder(BaseEstimator, TransformerMixin):
-    """Extract the day of week (dow), the hour, the month and the year from a
-    time column."""
+    """
+        Extract the day of week (dow), the hour, the month and the year from a time column.
+        Returns a copy of the DataFrame X with only four columns: 'dow', 'hour', 'month', 'year'
+    """
 
     def __init__(self, time_column, time_zone_name='America/New_York'):
         self.time_column = time_column
@@ -14,23 +17,22 @@ class TimeFeaturesEncoder(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        """Returns a copy of the DataFrame X with only four columns: 'dow', 'hour', 'month', 'year'"""
-        X = X.copy()
-        timezone_name = 'America/New_York'
-        time_column = "pickup_datetime"
-        X.index = pd.to_datetime(X[time_column])
-        X.index = X.index.tz_convert(timezone_name)
-        X["dow"] = X.index.weekday
-        X["hour"] = X.index.hour
-        X["month"] = X.index.month
-        X["year"] = X.index.year
-        cols = ['dow','hour','month','year']
-        X = X[cols]
-        return X.reset_index(drop=True)
+        assert isinstance(X, pd.DataFrame)
+        X_ = X.copy()
+        X_.index = pd.to_datetime(X[self.time_column])
+        X_.index = X_.index.tz_convert(self.time_zone_name)
+        X_["dow"] = X_.index.weekday
+        X_["hour"] = X_.index.hour
+        X_["month"] = X_.index.month
+        X_["year"] = X_.index.year
+        return X_[['dow', 'hour', 'month', 'year']]
 
 
 class DistanceTransformer(BaseEstimator, TransformerMixin):
-    """Compute the haversine distance between two GPS points."""
+    """
+        Compute the haversine distance between two GPS points.
+        Returns a copy of the DataFrame X with only one column: 'distance'
+    """
 
     def __init__(self,
                  start_lat="pickup_latitude",
@@ -46,6 +48,13 @@ class DistanceTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        """Returns a copy of the DataFrame X with only one column: 'distance'"""
-        distance = haversine_vectorized(X, self.start_lat, self.start_lon, self.end_lat, self.end_lon)
-        return pd.DataFrame(distance)
+        assert isinstance(X, pd.DataFrame)
+        X_ = X.copy()
+        X_["distance"] = haversine_vectorized(
+            X_,
+            start_lat=self.start_lat,
+            start_lon=self.start_lon,
+            end_lat=self.end_lat,
+            end_lon=self.end_lon
+        )
+        return X_[['distance']]
